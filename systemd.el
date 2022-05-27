@@ -98,7 +98,7 @@
     "GENEVE" "L2TP" "L2TPsession" "MACsec" "FooOverUDP"
     "Tunnel" "Peer" "Tun" "Tap" "Bond" "Network" "Address" "Route" "DHCP"
     "Neighbor" "IPv6AddressLabel" "RoutingPolicyRule" "NextHop" "DHCPv4"
-    "DHCPv6" "IPv6AcceptRA" "DHCPServer" "IPv6Prefix" "CAN" 
+    "DHCPv6" "IPv6AcceptRA" "DHCPServer" "IPv6Prefix" "CAN"
     "Bridge" "BridgeFDB" "BridgeVLAN" "VXCAN" "WireGuard" "WireGuardPeer")
   "Network configuration sections for systemd 244 (not exhaustive).")
 
@@ -128,7 +128,7 @@
 
 ;;;###autoload
 (defconst systemd-autoload-regexp
-  (rx (+? (any "a-zA-Z0-9-_.@\\")) "."
+  (rx (+? (any "-a-zA-Z0-9_.@\\")) "."
       (or "automount" "busname" "mount" "service" "slice"
           "socket" "swap" "target" "timer" "link" "netdev" "network")
       string-end)
@@ -137,7 +137,7 @@
 ;;;###autoload
 (defconst systemd-tempfn-autoload-regexp
   (rx ".#"
-      (or (and (+? (any "a-zA-Z0-9-_.@\\")) "."
+      (or (and (+? (any "-a-zA-Z0-9_.@\\")) "."
                (or "automount" "busname" "mount" "service" "slice"
                    "socket" "swap" "target" "timer" "link" "netdev" "network"))
           "override.conf")
@@ -237,7 +237,7 @@ file, defaulting to the link under point, if any."
           (completion-table-dynamic #'systemd-completion-table))))
 
 (defun systemd-company-backend (command &optional arg &rest ignored)
-  "Backend for `company-mode' in `systemd-mode' buffers."
+  "Backend for `company-mode' in `systemd-mode' buffers: COMMAND, ARG, IGNORED."
   (interactive (list 'interactive))
   (pcase command
     (`interactive (company-begin-backend 'systemd-company-backend))
@@ -256,12 +256,12 @@ file, defaulting to the link under point, if any."
     flag))
 
 (defun systemd-syntax-propertize (start end)
-  "`systemd-propertize-function' for `systemd-mode' buffers."
+  "`systemd-propertize-function' for `systemd-mode' buffers START, END."
   (let ((case-fold-search nil))
     (goto-char start)
     (funcall
      (syntax-propertize-rules
-      ("^[ \t]*\\([;#]\\)$?"
+      ("^[ \t]*\\([;#]\\)\\$?"
        (1 (when (systemd-construct-start-p) (string-to-syntax "<")))))
      start end)))
 
@@ -274,6 +274,7 @@ file, defaulting to the link under point, if any."
   (line-end-position))
 
 (defun systemd-font-lock-extend-region ()
+  "Systemd font lock extend region."
   (goto-char font-lock-beg)
   (while (and (zerop (forward-line -1))
               (= (char-before (line-end-position)) ?\\)
@@ -284,7 +285,7 @@ file, defaulting to the link under point, if any."
   (setq font-lock-end (systemd-value-extend-region)))
 
 (defmacro define-systemd-matcher (name regexp &optional docstring)
-  "Define a new function NAME that matches REGEXP in a multi-line construct.
+  "Define function NAME that matches REGEXP in a multi-line construct DOCSTRING.
 Only returns matches of REGEXP on lines passing `systemd-construct-start-p'."
   (declare (debug (symbolp stringp &optional stringp))
            (indent 2) (doc-string 3))
@@ -303,7 +304,7 @@ Only returns matches of REGEXP on lines passing `systemd-construct-start-p'."
   "Matcher for keys (unit directives).")
 
 (defun systemd-exec-prefix-anchored-matcher (limit)
-  "Matcher for the exec prefix in anchored font-lock rule.
+  "Matcher for the exec prefix in anchored font-lock rule, LIMIT.
 See `font-lock-keywords' and (info \"(elisp) Search-based Fontification\")."
   (let ((pos (car (match-data)))
         (prefixes '(?- ?@ ?+))
